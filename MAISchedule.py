@@ -188,10 +188,10 @@ class MAISchedule(ISchedule):
 
     def __get_days(self, html_weeks):
         days_on_week = dict()
-        day = dict()
         # обрабытываем день
         for html_day in html_weeks:
             # получаем все предметы за день
+            day = dict()
             date = str(html_day.find(class_='sc-day-header').contents[0])
             day_of_week = html_day.find(class_='sc-day').contents[0]
 
@@ -216,11 +216,33 @@ class MAISchedule(ISchedule):
 
             one_day['name_item'] = name_item
             one_day['time_item'] = time_item
-            one_day['type_itme'] = type_time
+            one_day['type_item'] = type_time
             one_day['map_item'] = map_item
             one_day['lecture_item'] = lecture_item
 
             list_items.append(one_day.copy())
 
         return list_items
+
+    def print_schedule_all(self, list_all_url_weeks):
+        for i in list_all_url_weeks:
+            print(list_all_url_weeks[i][0])
+            m = self.get_schedule_on_week(list_all_url_weeks[i][1])
+            self.print_schedule_on_week(m)
+
+
+    def print_schedule_on_week(self, dict_schedule):
+        for name_date in dict_schedule:
+            date = dict_schedule[name_date]['date']
+            items = dict_schedule[name_date]['item']
+            print(f"    {date} -- {name_date}")
+            for i in enumerate(items):
+                number_item = i[0] 
+                item = i[1]
+                time_item = item['time_item']
+                type_item = item['type_item']
+                map_item = item['map_item']
+                lecture_item = item['lecture_item']
+                print(f"        {int(i[0]) + 1}: {item['name_item']} -- {time_item} -- {lecture_item} -- {type_item} -- {map_item}")
+                
 

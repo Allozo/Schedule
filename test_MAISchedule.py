@@ -20,17 +20,27 @@ def full_test():
                         print(d.get_schedule_on_week(schedule[i][1]))
 
 
+def test_print_all_schedule(d):
+    url_my_group = 'https://mai.ru/education/schedule/detail.php?group=М3О-226Б-19'
+    my_schedule = d.get_schedule_for_group(url_my_group)
+    d.print_schedule_all(my_schedule)
+
+
+def test_print_schedule_on_week(d):
+    url_week = 'https://mai.ru/education/schedule/detail.php?group=М3О-226Б-19&week=2'
+    my_schedule_two_week = d.get_schedule_on_week(url_week)
+    d.print_schedule_on_week(my_schedule_two_week)
+
+
 def test():
     d = MAISchedule()
     d.update_schedule()
-    url_my_group = 'https://mai.ru/education/schedule/detail.php?group=М3О-226Б-19'
-    my_schedule = d.get_schedule_for_group(url_my_group)
-    url_week = 'https://mai.ru/education/schedule/detail.php?group=М3О-226Б-19&week=2'
-    my_schedule_two_week = d.get_schedule_on_week(url_week)
 
-    for i in my_schedule:
-        print(my_schedule[i][0] + ' -- ' + my_schedule[i][1])
-        print(d.get_schedule_on_week(my_schedule[i][1]))
+    # вывести все расписание для группы
+    test_print_all_schedule(d)
+
+    # вывести расписание для второй недели
+    # test_print_schedule_on_week(d)
 
 
 def main():

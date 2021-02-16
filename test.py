@@ -1,5 +1,4 @@
 def main():
-    print(end="")
     print("123")
     for i in range(7):
         print(i)
