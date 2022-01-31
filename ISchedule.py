@@ -1,6 +1,34 @@
-class ISchedule:
-    def update_schedule(self):
-        raise NotImplementedError("Виртуальный метод не переопределён")
+from abc import ABC, abstractmethod
 
-    def get_schedule_for_group(self, url_group):
-        raise NotImplementedError("Виртуальный метод не переопределён")
+class ISchedule(ABC):
+    @abstractmethod
+    def select_group(self):
+        """
+        Метод для выбора номера группы.
+        """
+        pass
+
+    @abstractmethod
+    def update_schedule(self):
+        """
+        Метод для обновления расписания.
+        """
+        pass
+
+    @abstractmethod
+    def get_schedule_on_week(self, number_week):
+        """
+        Метод для получения расписания на указанную неделю.
+
+        number_week {int} - Номер недели для которой будем возвращать расписание
+        """
+        pass
+
+    @abstractmethod
+    def get_schedule_on_day(self, data):
+        """
+        Метод для получения расписания на указанный день.
+
+        data {str} - Дата для которой будем возвращать расписание
+        """
+        pass
