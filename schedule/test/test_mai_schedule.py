@@ -1,27 +1,27 @@
 import pytest
 import json
-from MAISchedule import MAISchedule, load_html
+from schedule.MAISchedule import MAISchedule, load_html
 
 def test_parsing_html_with_all_groups():
     schedule = MAISchedule()
 
-    html_page_all_group = load_html("all_groups.html", "dir_html")
+    html_page_all_group = load_html("all_groups.html", "schedule\\test\\file_for_test")
 
     # Получим словарь со всеми курсами, институтами, направлениями и группами
     dict_all_courses = {}
-    for course in schedule.get_courses(html_page_all_group):
+    for course in schedule._MAISchedule__get_courses(html_page_all_group):
         dict_all_institutes = {}
-        for institute in schedule.get_institute(html_page_all_group, course):
+        for institute in schedule._MAISchedule__get_institute(html_page_all_group, course):
             dict_all_fields = {}
-            for field in schedule.get_field(html_page_all_group, course, institute):
+            for field in schedule._MAISchedule__get_field(html_page_all_group, course, institute):
                 dict_all_group = []
-                for group in schedule.get_group(html_page_all_group, course, institute, field):
+                for group in schedule._MAISchedule__get_group(html_page_all_group, course, institute, field):
                     dict_all_group.append(group)
                 dict_all_fields[field] = dict_all_group
             dict_all_institutes[institute] = dict_all_fields
         dict_all_courses[course] = dict_all_institutes
 
-    with open("test\\file_for_test\\all_groups.json", "r", encoding="utf-8") as file:
+    with open("schedule\\test\\file_for_test\\all_groups.json", "r", encoding="utf-8") as file:
         loads_json = json.load(file)
 
     # Получим конкретное значения из загруженного json

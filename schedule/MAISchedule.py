@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from ISchedule import ISchedule
+from schedule.ISchedule import ISchedule
 import requests
 
 
@@ -63,7 +63,7 @@ class MAISchedule(ISchedule):
         """
         return self._number_group
 
-    def get_courses(self, html_page_all_groups: str) -> list:
+    def __get_courses(self, html_page_all_groups: str) -> list:
         """
         Из HTML получаем список всех курсов в МАИ.
 
@@ -81,7 +81,7 @@ class MAISchedule(ISchedule):
 
         return courses
 
-    def get_institute(self, html_page_all_groups: str, course: str) -> list:
+    def __get_institute(self, html_page_all_groups: str, course: str) -> list:
         """
         Из HTML получаем все институты для данного курса.
 
@@ -101,7 +101,7 @@ class MAISchedule(ISchedule):
 
         return institutes
 
-    def get_field(self, html_page_all_groups: str, course: str, institute: str) -> list:
+    def __get_field(self, html_page_all_groups: str, course: str, institute: str) -> list:
         """
         Из HTML получаем все направления для данного курса и института.
 
@@ -123,7 +123,7 @@ class MAISchedule(ISchedule):
 
         return fields
 
-    def get_group(self, html_page_all_groups: str, course: str, institute: str, field: str) -> list:
+    def __get_group(self, html_page_all_groups: str, course: str, institute: str, field: str) -> list:
         """
         Из HTML получаем все группы для данного курса, института и направления.
 
@@ -154,28 +154,28 @@ class MAISchedule(ISchedule):
         html_page_all_group = get_html(self.get_url_all_groups())
 
         # Получим список курсов
-        list_courses = self.get_courses(html_page_all_group)
+        list_courses = self.__get_courses(html_page_all_group)
         print(list_courses)
 
         # Выберем курс
         course = list_courses[2]
 
         # Получим список институтов
-        list_institute = self.get_institute(html_page_all_group, course)
+        list_institute = self.__get_institute(html_page_all_group, course)
         print(list_institute)
 
         # Выбираем институт
         institute = list_institute[2]
 
         # Получим список направлений подготовки
-        list_fields = self.get_field(html_page_all_group, course, institute)
+        list_fields = self.__get_field(html_page_all_group, course, institute)
         print(list_fields)
 
         # Выбираем направление
         field = list_fields[1]
 
         # Получим список групп
-        list_group = self.get_group(html_page_all_group, course, institute, field)
+        list_group = self.__get_group(html_page_all_group, course, institute, field)
         print(list_group)
 
         print('\n')
@@ -211,8 +211,8 @@ class MAISchedule(ISchedule):
         pass
 
 
-# if __name__ == "__main__":
-#     print("\n")
-#     m = MAISchedule()
-#     tmp = m.select_group()
-#     print(tmp)
+if __name__ == "__main__":
+    print("\n")
+    m = MAISchedule()
+    tmp = m.select_group()
+    print(tmp)
