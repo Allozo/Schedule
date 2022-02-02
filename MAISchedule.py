@@ -3,246 +3,216 @@ from ISchedule import ISchedule
 import requests
 
 
+dict_mai_url = {
+    "url_all_groups": "https://mai.ru/education/schedule/",
+    "url_week": "https://mai.ru/education/schedule/detail.php?group={number_group}&week={number_week}",
+}
+
+
+def get_html(url: str):
+    """
+    По переданному url получаем html.
+    Если код ответа не 200, то вернём ошибку.
+    """
+    page = requests.get(url)
+
+    assert (
+        page.status_code == 200
+    ), f"Не удалось получить страницу. Код ошибки: {page.status_code}"
+
+    return page.text
+
+
+def save_html(html_page: str):
+    """
+    Сохраняет html страницы в файл.
+    """
+    with open("test\\dir_html\\all_groups.html", "w", encoding="utf-8") as file:
+        file.write(html_page)
+
+
+def load_html(name: str, path: str) -> str:
+    data = None
+    with open(f"{path}\\{name}", "r", encoding="utf-8") as file:
+        data = file.read()
+    return data
+
 class MAISchedule(ISchedule):
-    def __init__(self):
-        # Сайт откуда будем брать расписание
-        self.official_website = "https://mai.ru/education/schedule/"
-        self.courses = dict()
+    def __init__(self) -> None:
+        super().__init__()
+        self._number_group = "М3О-326Б-19"
 
-    def update_schedule(self):
-        f"""
-        Данный метод получает html с сайта {self.official_website} и парсит его.
-        :return: Возвращает словари курсов, институтов, направлений 
-            подготовки, групп и ссылки на их расписание в виде словаря.
+    def get_url_all_groups(self):
         """
-        start_page_html = self.__get_html_page(self.official_website)
-
-        soup = BeautifulSoup(start_page_html, "html.parser")
-        html_courses = soup.findAll(class_='sc-container')
-
-        self.courses = self.__get_courses(html_courses)
-
-    @staticmethod
-    def __get_html_page(url):
-        """ проверим есть ли подключение """
-        page = requests.get(url)
-        try:
-            assert page.status_code == 200
-            return page.text
-        except AssertionError:
-            print(f"Не удалось получить. Код ошибки {page.status_code}")
-            print("Завершение работы.")
-            exit(1)
-
-    def __get_courses(self, html_courses):
+        Возвращает ссылка на страницу, где указаны все группы
         """
-        Получает на вход html блок, где находятся все курсы. Вытаскиваем курс
-            (его имя), а потом получаем для него институты.
-        :param html_courses: блок html страницы, где находятся все курсы.
-        :return: возвращает словари всех курсов.
-        """
-        courses = dict()
-        for html_course in html_courses:
-            '''получаем название курса'''
-            html_name_course = html_course.findAll(class_='sc-container-header')
-            name_course = html_name_course[0].contents[0]
+        return dict_mai_url["url_all_groups"]
 
-            '''получим институты внутри курса'''
-            html_institutes = html_course.findAll('div', class_='sc-table-row')
-            courses[name_course] = self.__get_institutes(html_institutes)
+    def get_url_schedule_on_week(self, number_week: int):
+
+        return (
+            dict_mai_url["url_week"]
+            .replace("{number_group}", str(self.number_group))
+            .replace("{number_week}", str(number_week))
+        )
+
+    @property
+    def number_group(self):
+        """
+        Свойство для получения номера группы
+        """
+        return self._number_group
+
+    def get_courses(self, html_page_all_groups: str) -> list:
+        """
+        Из HTML получаем список всех курсов в МАИ.
+
+        Args:
+            html_page_all_groups (str): HTML страница со списком всех курсов, институтов и групп МАИ - https://mai.ru/education/schedule/.
+
+        Returns:
+            list[str]: Список всех курсов в МАИ.
+        """
+        soup = BeautifulSoup(html_page_all_groups, "html.parser")
+
+        list_html_courses = soup.findAll(class_='sc-container-header')
+
+        courses = [course.text for course in list_html_courses]
 
         return courses
 
-    def __get_institutes(self, html_institutes):
+    def get_institute(self, html_page_all_groups: str, course: str) -> list:
         """
-        Получает на вход html блок, где находятся все институты для опрделенного
-            курса. Вытаскиваем название института, а потом получаем для него все
-            направления подготовки.
-        :param html_institutes: блок html страницы, где находятся все
-            институты.
-        :return: возвращает словари всех институтов для конкретного курса.
+        Из HTML получаем все институты для данного курса.
+
+        Args:
+            html_page_all_groups (str): HTML страница со списком всех курсов и групп МАИ - https://mai.ru/education/schedule/.
+            course (str): Название курса.
+
+        Returns:
+            list[str]: Список всех институтов для данного курса в МАИ.
         """
-        all_institute = dict()
-        for html_institute in html_institutes:
-            '''получаем название институтов для каждого курса'''
-            html_name = html_institute.findAll('a', class_='sc-table-col')
-            name_institute = html_name[0].contents[0]
+        soup = BeautifulSoup(html_page_all_groups, "html.parser")
 
-            '''получим направления подготовки внутри института'''
-            html_fields = html_institute.findAll(class_='sc-groups')
-            all_institute[name_institute] = self.__get_fields(html_fields)
+        html_course = soup.find(class_='sc-container-header', string=course).find_parent()
+        list_html_institute = html_course.findAll('a', class_='sc-table-col')
 
-        return all_institute
+        institutes = [institute.text for institute in list_html_institute]
 
-    def __get_fields(self, html_fields):
+        return institutes
+
+    def get_field(self, html_page_all_groups: str, course: str, institute: str) -> list:
         """
-        Получает на вход html блок, где находятся все направления подготовки для
-            определённого института. Вытаскиваем названиянаправлений подготовки,
-            а потом для них получаем все группы.
-        :param html_fields: блок html страницы, где находятся все направления
-            подготовки.
-        :return: возвращает все направления подготовки для конкретного
-            института.
+        Из HTML получаем все направления для данного курса и института.
+
+        Args:
+            html_page_all_groups (str): HTML страница со списком всех курсов и групп МАИ - https://mai.ru/education/schedule/.
+            course (str): Название курса.
+            institute (str): Название института.
+
+        Returns:
+            list[str]: Список всех направлений для данного курса и института в МАИ.
         """
-        all_field = dict()
-        for html_field in html_fields:
-            '''получаем название направления подготовки'''
-            name_field = html_field.findAll(class_='sc-program')[0].contents[0]
+        soup = BeautifulSoup(html_page_all_groups, "html.parser")
 
-            ''' получим все группы внутри направления подготовки'''
-            html_groups = html_field.findAll('a', class_='sc-group-item')
+        html_course = soup.find(class_='sc-container-header', string=course)
+        html_institute = html_course.find_parent().find('a', class_='sc-table-col', string=institute).find_parent()
+        html_fields = html_institute.findAll(class_='sc-program')
 
-            groups = self.__get_groups(html_groups)
-            all_field[name_field] = groups
+        fields = [field.text for field in html_fields]
 
-        return all_field
+        return fields
 
-    def __get_groups(self, html_groups):
+    def get_group(self, html_page_all_groups: str, course: str, institute: str, field: str) -> list:
         """
-        Получает на вход html блок, где находятся все группы для определённого
-            направления подготовки. Вытаскиваем названия группы, а потом для неё
-            получаем ссылку на её расписание.
-        :param html_groups: блок html страницы, где находятся все группы.
-        :return: возвращает все группы и ссылки на их расписание для конкретного
-            направления подготовки.
+        Из HTML получаем все группы для данного курса, института и направления.
+
+        Args:
+            html_page_all_groups (str): HTML страница со списком всех курсов и групп МАИ - https://mai.ru/education/schedule/.
+            course (str): Название курса.
+            institute (str): Название института
+            field (str): Название направления
+
+        Returns:
+            list[str]: Список всех групп для данного курса, института и направления подготовки в МАИ.
         """
-        groups = dict()
-        for html_group in html_groups:
-            ''' получим название группы'''
-            name_group = html_group.contents[0]
+        soup = BeautifulSoup(html_page_all_groups, "html.parser")
 
-            ''' получи url группы'''
-            url_group = html_group['href']
-            groups[name_group] = self.official_website + url_group
+        html_course = soup.find(class_='sc-container-header', string=course)
+        html_institute = html_course.find_parent().find('a', class_='sc-table-col', string=institute).find_parent()
+        html_field = html_institute.find(class_='sc-program', string=field).find_parent()
+        html_groups = html_field.findAll(class_='sc-group-item')
 
-        return groups
+        list_groups = [group.text for group in html_groups]
 
-    def get_schedule_for_group(self, url_group):
+        return list_groups
+
+    def select_group(self):
         """
-        Получает на вход ссылку на расписание конкретной группы.
-        :param url_group:
-        :return: Возвращает словарь состоящий из недель, дней недели и занятий.
+        Метод для выбора номера группы.
         """
+        html_page_all_group = get_html(self.get_url_all_groups())
 
-        start_page = self.__get_html_page(url_group)
+        # Получим список курсов
+        list_courses = self.get_courses(html_page_all_group)
+        print(list_courses)
 
-        soup = BeautifulSoup(start_page, "html.parser")
-        html_weeks = soup.find('table', class_='table')
+        # Выберем курс
+        course = list_courses[2]
 
-        schedule = self.__get_all_week(html_weeks)
-        return schedule
+        # Получим список институтов
+        list_institute = self.get_institute(html_page_all_group, course)
+        print(list_institute)
 
-    def __get_all_week(self, html_weeks):
-        number_name_url_week = dict()
+        # Выбираем институт
+        institute = list_institute[2]
 
-        html_list_weeks = html_weeks.findAll('td')
-        flag = -1
+        # Получим список направлений подготовки
+        list_fields = self.get_field(html_page_all_group, course, institute)
+        print(list_fields)
 
-        html_number = html_list_weeks[0::2]
-        html_name_url = html_list_weeks[1::2]
-        for (number, name_and_url) in zip(html_number, html_name_url):
-            number_week = number.contents[0]
+        # Выбираем направление
+        field = list_fields[1]
 
-            name_and_url = name_and_url.contents[0]
+        # Получим список групп
+        list_group = self.get_group(html_page_all_group, course, institute, field)
+        print(list_group)
 
-            if ('<' or '>') not in str(name_and_url):
-                name_week = name_and_url
-                url_week = ''
-                flag = str(number_week)
-            else:
-                name_week = name_and_url.contents[0]
-                url_week = self.official_website + 'detail.php' + name_and_url['href']
+        print('\n')
 
-            number_name_url_week[number_week] = [name_week, url_week]
+        return
 
-        '''эта штука нужна из-за того, что для текущей недели нет ссылки, а 
-            значит её нужно ставить отдельно ручками'''
-        if flag == '1':
-            new_name = number_name_url_week[flag][0]
-            new_url = number_name_url_week[str(2)][1][:-1] + flag
-            number_name_url_week[flag] = [new_name, new_url]
-        else:
-            new_name = number_name_url_week[flag][0]
-            new_url = number_name_url_week[str(1)][1][:-1] + flag
-            number_name_url_week[flag] = [new_name, new_url]
+    def update_schedule(self):
+        """
+        Метод для обновления расписания.
+        """
+        pass
 
-        return number_name_url_week
+    def get_schedule_on_week(self, number_week):
+        """
+        Метод для получения расписания на указанную неделю.
 
-    def get_schedule_on_week(self, url_week):
-        # откроем html из файла
-        # with open('html_site.html', 'r', encoding='utf-8') as file:
-        #     start_page = file.read()
+        number_week {int} - Номер недели для которой будем возвращать расписание
+        """
+        pass
 
-        start_page = self.__get_html_page(url_week)
+    def get_schedule_on_day(self, data):
+        """
+        Метод для получения расписания на указанный день.
 
-        # with open('html_site.html', 'w', encoding='utf-8') as file:
-        #     file.write(start_page)
+        data {str} - Дата для которой будем возвращать расписание
+        """
+        pass
 
-        soup = BeautifulSoup(start_page, "html.parser")
-
-        # получим html дни
-        html_weeks = soup.findAll('div', class_='sc-container')
-
-        schedule_on_week = self.__get_days(html_weeks)
-        return schedule_on_week
-
-    def __get_days(self, html_weeks):
-        days_on_week = dict()
-        # обрабытываем день
-        for html_day in html_weeks:
-            # получаем все предметы за день
-            day = dict()
-            date = str(html_day.find(class_='sc-day-header').contents[0])
-            day_of_week = html_day.find(class_='sc-day').contents[0]
-
-            # обработаем предметы в день
-            today_item = self.___get_items(html_day)
-            day['item'] = today_item
-            day['date'] = date
-            days_on_week[day_of_week] = day
-        return days_on_week
-
-    @staticmethod
-    def ___get_items(html_day):
-        now_day = html_day.find(class_='sc-table-detail').findAll(class_='sc-table-row')
-        one_day = dict()
-        list_items = []
-        for item in now_day:
-            name_item = item.findAll(class_='sc-title')[0].contents[0]
-            time_item = item.findAll(class_='sc-item-time')[0].contents[0]
-            type_time = item.findAll(class_='sc-item-type')[0].contents[0]
-            map_item = str(item.findAll('div', class_='sc-item-location')[1].contents[2]).replace('\t', '').replace('\n', '')
-            lecture_item = item.findAll('span', class_='sc-lecturer')[0].contents
-
-            one_day['name_item'] = name_item
-            one_day['time_item'] = time_item
-            one_day['type_item'] = type_time
-            one_day['map_item'] = map_item
-            one_day['lecture_item'] = lecture_item
-
-            list_items.append(one_day.copy())
-
-        return list_items
-
-    def print_schedule_all(self, list_all_url_weeks):
-        for i in list_all_url_weeks:
-            print(list_all_url_weeks[i][0])
-            m = self.get_schedule_on_week(list_all_url_weeks[i][1])
-            self.print_schedule_on_week(m)
+    def get_all_schedule(self):
+        """
+        Возвращает всё расписание группы.
+        """
+        pass
 
 
-    def print_schedule_on_week(self, dict_schedule):
-        for name_date in dict_schedule:
-            date = dict_schedule[name_date]['date']
-            items = dict_schedule[name_date]['item']
-            print(f"    {date} -- {name_date}")
-            for i in enumerate(items):
-                number_item = i[0] 
-                item = i[1]
-                time_item = item['time_item']
-                type_item = item['type_item']
-                map_item = item['map_item']
-                lecture_item = item['lecture_item']
-                print(f"        {int(i[0]) + 1}: {item['name_item']} -- {time_item} -- {lecture_item} -- {type_item} -- {map_item}")
-                
-
+# if __name__ == "__main__":
+#     print("\n")
+#     m = MAISchedule()
+#     tmp = m.select_group()
+#     print(tmp)

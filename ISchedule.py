@@ -32,3 +32,10 @@ class ISchedule(ABC):
         data {str} - Дата для которой будем возвращать расписание
         """
         pass
+
+    @abstractmethod
+    def get_all_schedule(self):
+        """
+        Возвращает всё расписание группы.
+        """
+        pass
