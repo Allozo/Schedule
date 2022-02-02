@@ -31,11 +31,12 @@ def save_html(html_page: str):
         file.write(html_page)
 
 
-def load_html(name: str, path: str) -> str:
+def load_html(path: str) -> str:
     data = None
-    with open(f"{path}\\{name}", "r", encoding="utf-8") as file:
+    with open(f"{path}", "r", encoding="utf-8") as file:
         data = file.read()
     return data
+
 
 class MAISchedule(ISchedule):
     def __init__(self) -> None:
@@ -68,14 +69,15 @@ class MAISchedule(ISchedule):
         Из HTML получаем список всех курсов в МАИ.
 
         Args:
-            html_page_all_groups (str): HTML страница со списком всех курсов, институтов и групп МАИ - https://mai.ru/education/schedule/.
+            html_page_all_groups (str): HTML страница со списком всех курсов
+                и групп МАИ - https://mai.ru/education/schedule/.
 
         Returns:
             list[str]: Список всех курсов в МАИ.
         """
         soup = BeautifulSoup(html_page_all_groups, "html.parser")
 
-        list_html_courses = soup.findAll(class_='sc-container-header')
+        list_html_courses = soup.findAll(class_="sc-container-header")
 
         courses = [course.text for course in list_html_courses]
 
@@ -86,7 +88,9 @@ class MAISchedule(ISchedule):
         Из HTML получаем все институты для данного курса.
 
         Args:
-            html_page_all_groups (str): HTML страница со списком всех курсов и групп МАИ - https://mai.ru/education/schedule/.
+            html_page_all_groups (str): HTML страница со списком всех курсов
+                и групп МАИ - https://mai.ru/education/schedule/.
+
             course (str): Название курса.
 
         Returns:
@@ -94,20 +98,27 @@ class MAISchedule(ISchedule):
         """
         soup = BeautifulSoup(html_page_all_groups, "html.parser")
 
-        html_course = soup.find(class_='sc-container-header', string=course).find_parent()
-        list_html_institute = html_course.findAll('a', class_='sc-table-col')
+        html_course = soup.find(
+            class_="sc-container-header", string=course
+        ).find_parent()
+        list_html_institute = html_course.findAll("a", class_="sc-table-col")
 
         institutes = [institute.text for institute in list_html_institute]
 
         return institutes
 
-    def __get_field(self, html_page_all_groups: str, course: str, institute: str) -> list:
+    def __get_field(
+        self, html_page_all_groups: str, course: str, institute: str
+    ) -> list:
         """
         Из HTML получаем все направления для данного курса и института.
 
         Args:
-            html_page_all_groups (str): HTML страница со списком всех курсов и групп МАИ - https://mai.ru/education/schedule/.
+            html_page_all_groups (str): HTML страница со списком всех курсов
+                и групп МАИ - https://mai.ru/education/schedule/.
+
             course (str): Название курса.
+
             institute (str): Название института.
 
         Returns:
@@ -115,33 +126,50 @@ class MAISchedule(ISchedule):
         """
         soup = BeautifulSoup(html_page_all_groups, "html.parser")
 
-        html_course = soup.find(class_='sc-container-header', string=course)
-        html_institute = html_course.find_parent().find('a', class_='sc-table-col', string=institute).find_parent()
-        html_fields = html_institute.findAll(class_='sc-program')
+        html_course = soup.find(class_="sc-container-header", string=course)
+        html_institute = (
+            html_course.find_parent()
+            .find("a", class_="sc-table-col", string=institute)
+            .find_parent()
+        )
+        html_fields = html_institute.findAll(class_="sc-program")
 
         fields = [field.text for field in html_fields]
 
         return fields
 
-    def __get_group(self, html_page_all_groups: str, course: str, institute: str, field: str) -> list:
+    def __get_group(
+        self, html_page_all_groups: str, course: str, institute: str, field: str
+    ) -> list:
         """
         Из HTML получаем все группы для данного курса, института и направления.
 
         Args:
-            html_page_all_groups (str): HTML страница со списком всех курсов и групп МАИ - https://mai.ru/education/schedule/.
+            html_page_all_groups (str): HTML страница со списком всех курсов
+                и групп МАИ - https://mai.ru/education/schedule/.
+
             course (str): Название курса.
+
             institute (str): Название института
+
             field (str): Название направления
 
         Returns:
-            list[str]: Список всех групп для данного курса, института и направления подготовки в МАИ.
+            list[str]: Список всех групп для данного курса, института и
+                направления подготовки в МАИ.
         """
         soup = BeautifulSoup(html_page_all_groups, "html.parser")
 
-        html_course = soup.find(class_='sc-container-header', string=course)
-        html_institute = html_course.find_parent().find('a', class_='sc-table-col', string=institute).find_parent()
-        html_field = html_institute.find(class_='sc-program', string=field).find_parent()
-        html_groups = html_field.findAll(class_='sc-group-item')
+        html_course = soup.find(class_="sc-container-header", string=course)
+        html_institute = (
+            html_course.find_parent()
+            .find("a", class_="sc-table-col", string=institute)
+            .find_parent()
+        )
+        html_field = html_institute.find(
+            class_="sc-program", string=field
+        ).find_parent()
+        html_groups = html_field.findAll(class_="sc-group-item")
 
         list_groups = [group.text for group in html_groups]
 
@@ -178,7 +206,7 @@ class MAISchedule(ISchedule):
         list_group = self.__get_group(html_page_all_group, course, institute, field)
         print(list_group)
 
-        print('\n')
+        print("\n")
 
         return
 
@@ -192,7 +220,8 @@ class MAISchedule(ISchedule):
         """
         Метод для получения расписания на указанную неделю.
 
-        number_week {int} - Номер недели для которой будем возвращать расписание
+        number_week {int} - Номер недели для которой будем возвращать
+            расписание.
         """
         pass
 
@@ -200,7 +229,7 @@ class MAISchedule(ISchedule):
         """
         Метод для получения расписания на указанный день.
 
-        data {str} - Дата для которой будем возвращать расписание
+        data {str} - Дата для которой будем возвращать расписание.
         """
         pass
 
