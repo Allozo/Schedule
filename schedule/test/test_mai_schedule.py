@@ -1,6 +1,5 @@
-import pytest
-import json
-from schedule.MAISchedule import MAISchedule, load_html, save_html, load_json, save_json
+from schedule.MAISchedule import MAISchedule
+from schedule.utils import load_html, load_json
 
 dict_file_name = {
     "all_groups_html": "schedule\\test\\file_for_test\\all_groups.html",

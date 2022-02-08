@@ -1,9 +1,6 @@
 from bs4 import BeautifulSoup
-from schedule.ISchedule import ISchedule
-# from ISchedule import ISchedule
-import requests
 from datetime import date as dt
-import json
+from schedule.utils import get_html
 
 
 dict_mai_url = {
@@ -13,47 +10,7 @@ dict_mai_url = {
 }
 
 
-def get_html(url: str):
-    """
-    По переданному url получаем html.
-    Если код ответа не 200, то вернём ошибку.
-    """
-    page = requests.get(url)
-
-    assert (
-        page.status_code == 200
-    ), f"Не удалось получить страницу. Код ошибки: {page.status_code}"
-
-    return page.text
-
-
-def save_html(name: str, html_page: str):
-    """
-    Сохраняет html страницы в файл.
-    """
-    with open(f"{name}", "w", encoding="utf-8") as file:
-        file.write(html_page)
-
-
-def load_html(path: str) -> str:
-    data = None
-    with open(f"{path}", "r", encoding="utf-8") as file:
-        data = file.read()
-    return data
-
-
-def load_json(name: str):
-    with open(name, "r", encoding="utf-8") as file:
-        data = json.load(file)
-    return data
-
-
-def save_json(name: str, data):
-    with open(f"{name}", "w", encoding="utf-8") as file:
-        json.dump(data, file, ensure_ascii=False, indent=4)
-
-
-class MAISchedule(ISchedule):
+class MAISchedule():
     def __init__(self) -> None:
         super().__init__()
 
@@ -91,12 +48,7 @@ class MAISchedule(ISchedule):
 
         return counts_week
 
-    @property
-    def number_group(self):
-        """
-        Свойство для получения номера группы
-        """
-        return self._number_group
+    # Методы для выбора группы
 
     def get_courses(self, html_page_all_groups: str) -> list:
         """
@@ -212,45 +164,6 @@ class MAISchedule(ISchedule):
 
         return list_groups
 
-    def select_group(self):
-        """
-        Метод для выбора номера группы.
-        """
-        html_page_all_group = get_html(self.get_url_all_groups())
-
-        # Получим список курсов
-        list_courses = self.get_courses(html_page_all_group)
-        print(list_courses)
-
-        # Выберем курс
-        course = list_courses[2]
-
-        # Получим список институтов
-        list_institute = self.get_institute(html_page_all_group, course)
-        print(list_institute)
-
-        # Выбираем институт
-        institute = list_institute[2]
-
-        # Получим список направлений подготовки
-        list_fields = self.get_field(html_page_all_group, course, institute)
-        print(list_fields)
-
-        # Выбираем направление
-        field = list_fields[1]
-
-        # Получим список групп
-        list_group = self.get_group(html_page_all_group, course, institute, field)
-        print(list_group)
-
-        return
-
-    def update_schedule(self):
-        """
-        Метод для обновления расписания.
-        """
-        pass
-
     def get_all_days_on_week(self, html_schedule_on_week: str):
         """
         Из переданной HTML выбранной недели получим список пар (дата, день_недели).
@@ -336,7 +249,6 @@ class MAISchedule(ISchedule):
             Dict: Расписание для каждого дня на недели.
         """
         all_days_on_week = self.get_all_days_on_week(html_schedule_on_week)
-        save_html("days_on_week.html", html_schedule_on_week)
         # Для каждого дня получим расписание
         res = {}
         for date, name_day in all_days_on_week:
