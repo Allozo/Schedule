@@ -25,15 +25,6 @@ class ISchedule(ABC):
         pass
 
     @abstractmethod
-    def get_schedule_on_day(self, data):
-        """
-        Метод для получения расписания на указанный день.
-
-        data {str} - Дата для которой будем возвращать расписание
-        """
-        pass
-
-    @abstractmethod
     def get_all_schedule(self):
         """
         Возвращает всё расписание группы.
